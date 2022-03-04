@@ -6,6 +6,24 @@
 
 #include <LiquidCrystal.h>
 
+// make my classes
+
+class PinIn {
+  public:
+    int pin = 0;
+
+    PinIn(int pinnum) {pin = pinnum;}
+
+    void init() {
+      pinMode(pin, INPUT);
+    }
+
+    int readIn() {
+      return digitalRead(pin);
+    }
+};
+
+
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
@@ -13,46 +31,93 @@ byte empty[8] = {
   B00000,
 };
 
-byte underscore[8] = {
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B11111
-};
-
-byte upRamp[8] = {
-  B00000,
-  B00000,
-  B00001,
-  B00011,
-  B00111,
-  B01111,
+byte block[8] = {
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
   B11111,
   B11111
 };
 
 
 String mapString[2] = {
-  "                ",
-  "_<XX>____   ____"
+  " X X X X X X X ",
+  "           X   "
 };
 
+// init objects
+PinIn upButton(10);
+PinIn downButton(9);
+
 void setup() {
+  // init serial monitor
+  Serial.begin(9600);
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   
-  lcd.createChar(0, empty);
-  lcd.createChar(1, upRamp);
-  lcd.createChar(2, underscore);
-  
-  lcd.write(byte(0));
-  // for each in mapString read and write onto screen
+  lcd.setCursor(0,0);
+  lcd.print(mapString[0]);
+  lcd.setCursor(0, 1);
+  lcd.print(mapString[1]);
+  // init player (cursor)
+  lcd.blink();
 }
 
+int playerPos = 0;
+int playerRow = 1;
+
 void loop() {
-  
+  if (playerPos < mapString[0].length()) {
+    playerPos++;
+    if (mapString[playerRow].charAt(playerPos) == 'X') {
+      lcd.clear();
+      lcd.print("You Died!");
+      for (;;); // halts code
+    }
+    lcd.setCursor(playerPos, playerRow);
+    lcd.scrollDisplayLeft();
+    
+    
+  } else { // if player passes the level
+    lcd.clear();
+    lcd.print("You Won!");
+
+    lcd.setCursor(0,1);
+    lcd.print("[up] Again [down] Quit");
+
+    // wait for input
+    while (true) {
+
+      // quit
+      if (downButton.readIn() == HIGH) {
+        lcd.clear();
+        for (;;);
+      }
+
+      // play
+      if (upButton.readIn() == HIGH) {
+          lcd.clear();
+          lcd.print(mapString[0]);
+          lcd.setCursor(0,1);
+          lcd.print(mapString[1]);
+          playerPos=0;
+          playerRow=1;
+          break;
+      }
+    }
+  }
+
+  // check for button press
+  // might need a short while loop to give user input time
+  if (upButton.readIn() == HIGH) {  // Up button
+    playerRow = 0;
+  }
+  if (downButton.readIn() == HIGH) { // Down button
+    playerRow = 1;
+  }
+
+  delay(1000);
 }
