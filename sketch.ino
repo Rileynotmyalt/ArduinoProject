@@ -27,25 +27,10 @@ class PinIn {
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
-byte empty[8] = {
-  B00000,
-};
-
-byte block[8] = {
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111
-};
-
 
 String mapString[2] = {
-  " X X X X X X X ",
-  "           X   "
+  "           X       X             ",
+  "     X                   X      X"
 };
 
 // init objects
@@ -75,7 +60,8 @@ void loop() {
     if (mapString[playerRow].charAt(playerPos) == 'X') {
       lcd.clear();
       lcd.print("You Died!");
-      for (;;); // halts code
+      gameOver();
+      return;
     }
     lcd.setCursor(playerPos, playerRow);
     lcd.scrollDisplayLeft();
@@ -85,29 +71,8 @@ void loop() {
     lcd.clear();
     lcd.print("You Won!");
 
-    lcd.setCursor(0,1);
-    lcd.print("[up] Again [down] Quit");
-
-    // wait for input
-    while (true) {
-
-      // quit
-      if (downButton.readIn() == HIGH) {
-        lcd.clear();
-        for (;;);
-      }
-
-      // play
-      if (upButton.readIn() == HIGH) {
-          lcd.clear();
-          lcd.print(mapString[0]);
-          lcd.setCursor(0,1);
-          lcd.print(mapString[1]);
-          playerPos=0;
-          playerRow=1;
-          break;
-      }
-    }
+    gameOver();
+    
   }
 
   // check for button press
@@ -120,4 +85,38 @@ void loop() {
   }
 
   delay(1000);
+}
+
+void gameOver() {
+  delay(3000);
+
+  lcd.setCursor(0,0);
+  lcd.print("[up] Again");
+  lcd.setCursor(0,1);
+  lcd.print("[down] Quit");
+
+  // wait for input
+  while (true) {
+
+    // quit
+    if (downButton.readIn() == HIGH) {
+      lcd.clear();
+      lcd.print("You Quit");
+      lcd.setCursor(0,1);
+      lcd.print("Hit Reset 2 Play");
+      for (;;);
+    }
+
+    // play
+    if (upButton.readIn() == HIGH) {
+      lcd.clear();
+      lcd.home();
+      lcd.print(mapString[0]);
+      lcd.setCursor(0,1);
+      lcd.print(mapString[1]);
+      playerPos=0;
+      playerRow=1;
+      break;
+    }
+  }
 }
